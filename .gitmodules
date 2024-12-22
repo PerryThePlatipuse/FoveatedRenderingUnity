@@ -1,0 +1,6 @@
+[submodule "NativePluginsSrc/VrsBased/NvidiaAPI"]
+	path = NativePluginsSrc/VrsBased/NvidiaAPI
+	url = https://github.com/NVIDIA/nvapi
+[submodule "NativePluginsSrc/VrsBased/UnityAPI"]
+	path = NativePluginsSrc/VrsBased/UnityAPI
+	url = https://github.com/StephenHodgson/Native-Unity-API
