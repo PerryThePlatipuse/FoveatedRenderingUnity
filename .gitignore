@@ -3,7 +3,9 @@
 .vs
 NativePluginsSrc/VrsBased/Debug/
 NativePluginsSrc/VrsBased/x64/
-NativePluginsSrc/VrsBased/VrsBased.sln
-NativePluginsSrc/VrsBased/VrsBased.vcxproj
-NativePluginsSrc/VrsBased/VrsBased.vcxproj.filters
-NativePluginsSrc/VrsBased/VrsBased.vcxproj.user
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+GazeTracking/Debug
+GazeTracking/x64
