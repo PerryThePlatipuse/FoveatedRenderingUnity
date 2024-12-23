@@ -156,9 +156,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="enums.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GazeManager.cpp" />
     <ClCompile Include="NvApiWrapper.cpp" />

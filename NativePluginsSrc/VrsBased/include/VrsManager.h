@@ -4,14 +4,14 @@
 #include <d3d11.h>
 #include <nvapi.h>
 
-// Manages Virtual Reality Shading (VRS) configurations and interactions
+// Manages VRS configurations and interactions
 class VrsManager {
 public:
     VrsManager();
     ~VrsManager();
 
     // Initialize VRS helper with the Direct3D device
-    bool Initialize(ID3D11Device* device);
+    bool Initialize(ID3D11Device *device);
 
     // Configure shading rate preset
     void SetShadingRatePreset(ShadingRatePreset preset);
@@ -26,20 +26,23 @@ public:
     void ConfigureShadingRate(TargetArea targetArea, ShadingRate rate);
 
     // Apply shading rate pattern to the device context
-    void ApplyShadingRatePattern(ID3D11DeviceContext* deviceContext, NV_VRS_RENDER_MODE renderMode);
+    void ApplyShadingRatePattern(ID3D11DeviceContext *deviceContext, NV_VRS_RENDER_MODE renderMode);
 
     // Remove shading rate pattern from the device context
-    void RemoveShadingRatePattern(ID3D11DeviceContext* deviceContext);
+    void RemoveShadingRatePattern(ID3D11DeviceContext *deviceContext);
 
     // Release VRS helper resources
     void Release();
 
+    // Getter for vrsHelper
+    ID3DNvVRSHelper *GetVrsHelper() const { return vrsHelper; }
+
 private:
     // Internal helper methods
-    void UpdateShadingRatePresetParams(NV_VRS_HELPER_ENABLE_PARAMS& enableParams);
-    void UpdateFoveationPatternPresetParams(NV_VRS_HELPER_ENABLE_PARAMS& enableParams);
+    void UpdateShadingRatePresetParams(NV_VRS_HELPER_ENABLE_PARAMS &enableParams);
+    void UpdateFoveationPatternPresetParams(NV_VRS_HELPER_ENABLE_PARAMS &enableParams);
 
-    ID3DNvVRSHelper* vrsHelper;
+    ID3DNvVRSHelper *vrsHelper;
 
     // Configuration presets
     NV_FOVEATED_RENDERING_SHADING_RATE_PRESET shadingRatePreset;

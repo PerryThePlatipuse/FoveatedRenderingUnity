@@ -1,15 +1,15 @@
 #pragma once
 
-#include "VrsManager.h"
-#include "GazeManager.h"
-#include "RenderEventHandler.h"
 #include "Enums.h"
+#include "GazeManager.h"
+#include "NvApiWrapper.h"
+#include "RenderEventHandler.h"
 #include "Vector.h"
-#include <d3d11.h>
-#include <IUnityInterface.h>
+#include "VrsManager.h"
 #include <IUnityGraphics.h>
 #include <IUnityGraphicsD3D11.h>
-#include "NvApiWrapper.h"
+#include <IUnityInterface.h>
+#include <d3d11.h>
 
 // Manages Unity plugin lifecycle and interactions
 class PluginInterface {
@@ -18,7 +18,7 @@ public:
     ~PluginInterface();
 
     // Initialize and load plugin components
-    void Load(IUnityInterfaces* unityInterfaces);
+    void Load(IUnityInterfaces *unityInterfaces);
 
     // Unload and clean up plugin components
     void Unload();
@@ -37,7 +37,7 @@ public:
     void SetFoveationPatternPreset(ShadingPatternPreset preset);
     void ConfigureRegionRadii(TargetArea targetArea, float xRadius, float yRadius);
     void ConfigureShadingRate(TargetArea targetArea, ShadingRate rate);
-    void UpdateGazeDirection(const Vector3& leftGazeDir, const Vector3& rightGazeDir);
+    void UpdateGazeDirection(const Vector3 &gazeDir);
 
 private:
     // Callback for graphics device events
@@ -47,15 +47,19 @@ private:
     void HandleGraphicsDeviceEventInternal(UnityGfxDeviceEventType eventType);
 
     // Unity Graphics Interface
-    IUnityInterfaces* unityInterfaces;
-    IUnityGraphics* unityGraphics;
-    ID3D11Device* device;
+    IUnityInterfaces *unityInterfaces;
+    IUnityGraphics *unityGraphics;
+    ID3D11Device *device;
 
     // Managers
     VrsManager vrsManager;
     GazeManager gazeManager;
-    RenderEventHandler* renderEventHandler;
+    RenderEventHandler *renderEventHandler;
 
     // NVidia API Wrapper
     NvApiWrapper nvApiWrapper;
+
+    // FOV related
+    float tanHalfHorizontalFov;
+    float tanHalfVerticalFov;
 };
