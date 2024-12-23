@@ -9,3 +9,4 @@ NativePluginsSrc/VrsBased/x64/
 *.vcxproj.user
 GazeTracking/Debug
 GazeTracking/x64
+.clang-format
