@@ -1,9 +1,7 @@
-// VrsBased/Scripts/VrsUrpController.cs
-
 using UnityEngine;
 using UnityEngine.Rendering;
 using FoveatedRenderingVRS;
-using GazeTracking; // Namespace where ZoneVisualizer resides
+using GazeTracking;
 
 /// <summary>
 /// Equivalent controller for URP that configures the foveated rendering plugin.
@@ -58,7 +56,6 @@ public class VrsUrpController : MonoBehaviour
             VrsPluginApi.UpdateGazeDirection(Vector3.forward);
             GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
 
-            // Update ZoneVisualizer radii
             if (zoneVisualizer != null)
             {
                 zoneVisualizer.UpdateRadii(innerRadius, middleRadius);
@@ -137,7 +134,6 @@ public class VrsUrpController : MonoBehaviour
             VrsPluginApi.ConfigureRegionRadii(area, radii);
             GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
 
-            // Update ZoneVisualizer radii if INNER or MIDDLE
             if (zoneVisualizer != null)
             {
                 if (area == TargetArea.INNER || area == TargetArea.MIDDLE)
