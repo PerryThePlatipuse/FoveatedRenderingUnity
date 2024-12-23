@@ -1,10 +1,13 @@
+// VrsBased/Scripts/VrsUrpController.cs
+
 using UnityEngine;
 using UnityEngine.Rendering;
 using FoveatedRenderingVRS;
+using GazeTracking; // Namespace where ZoneVisualizer resides
 
 /// <summary>
 /// Equivalent controller for URP that configures the foveated rendering plugin.
-/// Attach this to your main camera or a central gameobject. 
+/// Attach this to your main camera or a central GameObject.
 /// The URP pipeline's VrsUrpFeature handles the actual plugin calls in passes.
 /// </summary>
 [RequireComponent(typeof(Camera))]
@@ -33,10 +36,16 @@ public class VrsUrpController : MonoBehaviour
 
     private Camera mainCamera;
 
+    [Header("Zone Visualizer")]
+    [Tooltip("Reference to the ZoneVisualizer component.")]
+    [SerializeField]
+    private ZoneVisualizer zoneVisualizer;
+
     void OnEnable()
     {
         mainCamera = GetComponent<Camera>();
-        
+
+        // Initialize foveated rendering
         renderingInitialized = VrsPluginApi.InitializeFoveatedRendering(mainCamera.fieldOfView, mainCamera.aspect);
 
         if (renderingInitialized)
@@ -48,6 +57,16 @@ public class VrsUrpController : MonoBehaviour
 
             VrsPluginApi.UpdateGazeDirection(Vector3.forward);
             GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+
+            // Update ZoneVisualizer radii
+            if (zoneVisualizer != null)
+            {
+                zoneVisualizer.UpdateRadii(innerRadius, middleRadius);
+            }
+            else
+            {
+                Debug.LogWarning("ZoneVisualizer reference is not set in VrsUrpController.");
+            }
         }
     }
 
@@ -70,7 +89,7 @@ public class VrsUrpController : MonoBehaviour
     {
         if (renderingInitialized)
         {
-            VrsPluginApi.SetShadingRatePreset  (preset);
+            VrsPluginApi.SetShadingRatePreset(preset);
             currentShadingPreset = preset;
 
             if (preset == ShadingRatePreset.SHADING_RATE_CUSTOM)
@@ -117,6 +136,17 @@ public class VrsUrpController : MonoBehaviour
         {
             VrsPluginApi.ConfigureRegionRadii(area, radii);
             GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+
+            // Update ZoneVisualizer radii if INNER or MIDDLE
+            if (zoneVisualizer != null)
+            {
+                if (area == TargetArea.INNER || area == TargetArea.MIDDLE)
+                {
+                    Vector2 newInnerRadius = area == TargetArea.INNER ? radii : innerRadius;
+                    Vector2 newMiddleRadius = area == TargetArea.MIDDLE ? radii : middleRadius;
+                    zoneVisualizer.UpdateRadii(newInnerRadius, newMiddleRadius);
+                }
+            }
         }
     }
 }
