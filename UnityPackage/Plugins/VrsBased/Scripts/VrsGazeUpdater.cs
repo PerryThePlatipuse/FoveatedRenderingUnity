@@ -1,9 +1,41 @@
-﻿using UnityEngine;
+﻿// VrsBased/Scripts/VrsGazeUpdater.cs
+using UnityEngine;
+using GazeTracking;
 
 namespace FoveatedRenderingVRS
 {
     public class VrsGazeUpdater : MonoBehaviour
     {
+        private void OnEnable()
+        {
+            GazeUpdater.Initialize();
+        }
+
+        private void OnDisable()
+        {
+            GazeUpdater.Cleanup();
+        }
+
+        void Update()
+        {
+            RefreshGazeDirection();
+        }
+
+        private void RefreshGazeDirection()
+        {
+            Vector2 normalizedDir = GazeUpdater.GetGazeDirectionVector();
+
+            Vector3 calculatedGaze = new Vector3(
+                normalizedDir.x,
+                normalizedDir.y,
+                1.0f
+            ).normalized;
+
+            VrsPluginApi.UpdateGazeDirection(calculatedGaze);
+
+            GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+        }
+
         public static bool AttachGazeUpdater(GameObject targetObject)
         {
             if (targetObject != null)
@@ -20,32 +52,6 @@ namespace FoveatedRenderingVRS
             }
 
             return false;
-        }
-
-        void OnEnable()
-        {
-        }
-
-        void Update()
-        {
-            RefreshGazeDirection();
-        }
-
-        private void RefreshGazeDirection()
-        {
-            Vector3 currentMousePosition = Input.mousePosition;
-
-            Vector2 normalizedMouse = new Vector2(1 - currentMousePosition.x / Screen.width, currentMousePosition.y / Screen.height);
-
-            Vector3 calculatedGaze = new Vector3(
-                (normalizedMouse.x - 0.5f) * 2.0f, // X-axis: left (-1) to right (+1)
-                (normalizedMouse.y - 0.5f) * 2.0f, // Y-axis: bottom (-1) to top (+1)
-                1.0f
-            ).normalized;
-
-            VrsPluginApi.UpdateGazeDirection(calculatedGaze);
-
-            GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
         }
     }
 }
