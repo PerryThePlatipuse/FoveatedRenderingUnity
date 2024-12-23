@@ -3,12 +3,12 @@
 #include <mutex>
 #include <cstdlib>
 #include <ctime>
+#include <windows.h>
 
-// Define export macros
 #ifdef _WIN32
 #define EXPORT_API __declspec(dllexport)
 #else
-#error "Only win supported"
+#error "Only Windows is supported"
 #endif
 
 namespace GazePlugin
@@ -19,24 +19,51 @@ namespace GazePlugin
     float gazeX = 0.0f;
     float gazeY = 0.0f;
 
+    void GetNormalizedMousePosition(float& x, float& y)
+    {
+        POINT cursorPos;
+        if (GetCursorPos(&cursorPos))
+        {
+            int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+            int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+            x = ((static_cast<float>(cursorPos.x) / screenWidth) * 2.0f) - 1.0f;
+            y = 1.0f - ((static_cast<float>(cursorPos.y) / screenHeight) * 2.0f);
+
+            if (x < -1.0f) x = -1.0f;
+            if (x > 1.0f) x = 1.0f;
+            if (y < -1.0f) y = -1.0f;
+            if (y > 1.0f) y = 1.0f;
+        }
+        else
+        {
+            x = 0.0f;
+            y = 0.0f;
+        }
+    }
+
     extern "C" EXPORT_API void InitializeGazeTracking()
     {
         if (running)
             return;
 
         running = true;
-        srand(static_cast<unsigned int>(time(0)));
 
         gazeThread = std::thread([]() {
             while (running)
             {
+                float currentX = 0.0f;
+                float currentY = 0.0f;
+
+                GetNormalizedMousePosition(currentX, currentY);
+
                 {
                     std::lock_guard<std::mutex> lock(gazeMutex);
-                    // Simulate gaze data
-                    gazeX = static_cast<float>((rand() % 100) / 100.0f - 0.5f) * 2.0f; // -1 to +1
-                    gazeY = static_cast<float>((rand() % 100) / 100.0f - 0.5f) * 2.0f; // -1 to +1
+                    gazeX = currentX;
+                    gazeY = currentY;
                 }
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
             }
             });
     }

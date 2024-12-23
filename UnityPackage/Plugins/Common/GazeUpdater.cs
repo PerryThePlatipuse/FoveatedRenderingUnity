@@ -40,7 +40,7 @@ namespace GazeTracking
         public static Vector2 GetGazeDirectionVector()
         {
             GetGazeDirection(out float x, out float y);
-            return new Vector2(x, y);
+            return new Vector2(-x, y);
         }
     }
 }
