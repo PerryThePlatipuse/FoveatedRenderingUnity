@@ -5,8 +5,10 @@ NativePluginsSrc/VrsBased/Debug/
 NativePluginsSrc/VrsBased/x64/
 *.sln
 *.vcxproj
+*.csproj
 *.vcxproj.filters
 *.vcxproj.user
 GazeTracking/Debug
 GazeTracking/x64
 .clang-format
+*.meta
