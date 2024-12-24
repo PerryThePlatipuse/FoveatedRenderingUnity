@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 using System;
+using FoveatedRenderingVRS;
 
 namespace FoveatedRenderingVRS_BIRP
 {
