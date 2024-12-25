@@ -6,26 +6,26 @@ using UnityEngine.UI;
 namespace GazeTracking
 {
     /// <summary>
-    /// ZoneVisualizer draws two circular borders on the screen based on provided radii.
+    /// ZoneVisualizer draws two elliptical borders on the screen based on provided radii.
     /// Attach this to a central GameObject in your scene with a Canvas component.
     /// </summary>
     [RequireComponent(typeof(Canvas))]
     public class ZoneVisualizer : MonoBehaviour
     {
         [Header("Circle Prefab")]
-        [Tooltip("Prefab of a circular UI Image with border.")]
+        [Tooltip("Prefab of a circular UI Image with border. Ensure 'Preserve Aspect' is enabled.")]
         public GameObject circlePrefab;
 
         [Header("Inner Circle Settings")]
-        [Tooltip("Normalized radius for the inner circle (0 to 1).")]
+        [Tooltip("Normalized radii for the inner ellipse (0 to 1).")]
         public Vector2 innerRadius = new Vector2(0.25f, 0.25f);
-        [Tooltip("Color of the inner circle border.")]
+        [Tooltip("Color of the inner ellipse border.")]
         public Color innerColor = Color.red;
 
         [Header("Middle Circle Settings")]
-        [Tooltip("Normalized radius for the middle circle (0 to 1).")]
+        [Tooltip("Normalized radii for the middle ellipse (0 to 1).")]
         public Vector2 middleRadius = new Vector2(0.33f, 0.33f);
-        [Tooltip("Color of the middle circle border.")]
+        [Tooltip("Color of the middle ellipse border.")]
         public Color middleColor = Color.green;
 
         private Image innerCircleImage;
@@ -46,21 +46,37 @@ namespace GazeTracking
             canvas = GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-            // Create Inner Circle
+            if (circlePrefab == null)
+            {
+                Debug.LogError("ZoneVisualizer: Circle Prefab is not assigned.");
+                return;
+            }
+
+            // Create Inner Ellipse
             GameObject innerCircle = Instantiate(circlePrefab, canvas.transform);
-            innerCircle.name = "InnerCircle";
+            innerCircle.name = "InnerEllipse";
             innerCircleImage = innerCircle.GetComponent<Image>();
+            if (innerCircleImage == null)
+            {
+                Debug.LogError("ZoneVisualizer: Circle Prefab does not contain an Image component.");
+                return;
+            }
             innerCircleImage.color = innerColor;
             innerRectTransform = innerCircle.GetComponent<RectTransform>();
-            SetCircleSize(innerCircleImage, innerRadius);
+            SetEllipseSize(innerRectTransform, innerRadius);
 
-            // Create Middle Circle
+            // Create Middle Ellipse
             GameObject middleCircle = Instantiate(circlePrefab, canvas.transform);
-            middleCircle.name = "MiddleCircle";
+            middleCircle.name = "MiddleEllipse";
             middleCircleImage = middleCircle.GetComponent<Image>();
+            if (middleCircleImage == null)
+            {
+                Debug.LogError("ZoneVisualizer: Circle Prefab does not contain an Image component.");
+                return;
+            }
             middleCircleImage.color = middleColor;
             middleRectTransform = middleCircle.GetComponent<RectTransform>();
-            SetCircleSize(middleCircleImage, middleRadius);
+            SetEllipseSize(middleRectTransform, middleRadius);
 
             // Initialize lastScreenSize
             lastScreenSize = new Vector2(Screen.width, Screen.height);
@@ -68,8 +84,15 @@ namespace GazeTracking
 
         void Start()
         {
-            // Ensure circles are correctly sized at start
-            UpdateRadii(innerRadius, middleRadius);
+            // Ensure ellipses are correctly sized at start
+            if (innerCircleImage != null && middleCircleImage != null)
+            {
+                UpdateRadii(innerRadius, middleRadius);
+            }
+            else
+            {
+                Debug.LogWarning("ZoneVisualizer: Ellipse images are not initialized properly.");
+            }
         }
 
         void Update()
@@ -83,54 +106,62 @@ namespace GazeTracking
         }
 
         /// <summary>
-        /// Sets the size of a circular Image based on normalized radii.
+        /// Sets the size of an elliptical Image based on normalized radii.
         /// </summary>
-        /// <param name="image">The Image component to resize.</param>
-        /// <param name="radius">Normalized radii (0 to 1).</param>
-        private void SetCircleSize(Image image, Vector2 radius)
+        /// <param name="rect">The RectTransform component to resize.</param>
+        /// <param name="radii">Normalized radii (0 to 1) for X and Y axes.</param>
+        private void SetEllipseSize(RectTransform rect, Vector2 radii)
         {
-            RectTransform rect = image.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                Debug.LogError("ZoneVisualizer: Attempted to set size on a null RectTransform.");
+                return;
+            }
+
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
 
-            // Calculate diameter in pixels
-            float diameterX = Screen.width * radius.x * 2.0f;
-            float diameterY = Screen.height * radius.y * 2.0f;
+            // Calculate size in pixels based on normalized radii
+            float width = Screen.width * radii.x * 2.0f;
+            float height = Screen.height * radii.y * 2.0f;
 
-            rect.sizeDelta = new Vector2(diameterX, diameterY);
+            rect.sizeDelta = new Vector2(width, height);
         }
 
         /// <summary>
-        /// Updates the radii of the inner and middle circles.
+        /// Updates the radii of the inner and middle ellipses.
         /// </summary>
-        /// <param name="newInnerRadius">New normalized radii for the inner circle.</param>
-        /// <param name="newMiddleRadius">New normalized radii for the middle circle.</param>
+        /// <param name="newInnerRadius">New normalized radii for the inner ellipse.</param>
+        /// <param name="newMiddleRadius">New normalized radii for the middle ellipse.</param>
         public void UpdateRadii(Vector2 newInnerRadius, Vector2 newMiddleRadius)
         {
             innerRadius = newInnerRadius;
             middleRadius = newMiddleRadius;
 
-            SetCircleSize(innerCircleImage, innerRadius);
-            SetCircleSize(middleCircleImage, middleRadius);
+            SetEllipseSize(innerRectTransform, innerRadius);
+            SetEllipseSize(middleRectTransform, middleRadius);
         }
 
         /// <summary>
-        /// Sets the center position of the visualizer circles based on normalized coordinates.
+        /// Sets the center position of the visualizer ellipses based on screen pixel coordinates.
         /// </summary>
-        /// <param name="normalizedPosition">Normalized position (X: -1 to 1, Y: -1 to 1).</param>
-        public void SetCenter(Vector2 normalizedPosition)
+        /// <param name="screenPosition">Screen position in pixels.</param>
+        public void SetCenter(Vector2 screenPosition)
         {
-            // Convert normalized position to screen pixels
-            float screenX = (normalizedPosition.x + 1f) / 2f * Screen.width;
-            float screenY = (normalizedPosition.y + 1f) / 2f * Screen.height;
+            if (canvas == null)
+            {
+                Debug.LogError("ZoneVisualizer: Canvas component is missing.");
+                return;
+            }
 
-            // Convert screen pixels to Canvas coordinates
-            Vector2 canvasPosition = new Vector2(screenX, screenY);
+            // Convert screen position to canvas anchored position
+            Vector2 canvasSize = canvas.GetComponent<RectTransform>().sizeDelta;
+            Vector2 anchoredPosition = screenPosition - new Vector2(canvasSize.x / 2f, canvasSize.y / 2f);
 
-            innerRectTransform.anchoredPosition = canvasPosition;
-            middleRectTransform.anchoredPosition = canvasPosition;
+            innerRectTransform.anchoredPosition = anchoredPosition;
+            middleRectTransform.anchoredPosition = anchoredPosition;
         }
     }
 }

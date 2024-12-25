@@ -12,3 +12,5 @@ GazeTracking/Debug
 GazeTracking/x64
 .clang-format
 *.meta
+!UnityPackage/Prefabs/Circle.png.meta
+!UnityPackage/Prefabs/CircleBorder.prefab.meta

@@ -2,6 +2,9 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
+/// <summary>
+/// A simple template command buffer.
+/// </summary>
 namespace FoveatedRenderingVRS_BIRP
 {
     public class VrsBirpCommandBufferManager

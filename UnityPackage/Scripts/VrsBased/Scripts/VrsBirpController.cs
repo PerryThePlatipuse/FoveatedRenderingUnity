@@ -35,9 +35,9 @@ namespace FoveatedRenderingVRS_BIRP
         private bool renderingActive = false;
 
         [SerializeField]
-        private ShadingRatePreset currentShadingPreset = ShadingRatePreset.SHADING_RATE_HIGHEST_PERFORMANCE;
+        private ShadingRatePreset currentShadingPreset = ShadingRatePreset.SHADING_RATE_CUSTOM;
         [SerializeField]
-        private ShadingPatternPreset currentPatternPreset = ShadingPatternPreset.SHADING_PATTERN_NARROW;
+        private ShadingPatternPreset currentPatternPreset = ShadingPatternPreset.SHADING_PATTERN_CUSTOM;
 
         [SerializeField]
         private Vector2 innerRadius = new Vector2(0.25f, 0.25f);
@@ -47,11 +47,16 @@ namespace FoveatedRenderingVRS_BIRP
         private Vector2 peripheralRadius = new Vector2(1.0f, 1.0f);
 
         [SerializeField]
-        private ShadingRate innerRate = ShadingRate.X1_PER_PIXEL;
+        private ShadingRate innerRate = ShadingRate.NORMAL;
         [SerializeField]
-        private ShadingRate middleRate = ShadingRate.X1_PER_2X2_PIXELS;
+        private ShadingRate middleRate = ShadingRate.REDUCTION_2X2;
         [SerializeField]
-        private ShadingRate peripheralRate = ShadingRate.X1_PER_4X4_PIXELS;
+        private ShadingRate peripheralRate = ShadingRate.REDUCTION_4X4;
+        
+        [Header("Zone Visualizer")]
+        [Tooltip("Reference to the ZoneVisualizer component.")]
+        [SerializeField]
+        private ZoneVisualizer zoneVisualizer;
 
         /// <summary>
         /// Enables or disables foveated rendering.
@@ -69,6 +74,15 @@ namespace FoveatedRenderingVRS_BIRP
                 else
                 {
                     bufferManager.DisableBuffers(mainCamera);
+                }
+                // Update ZoneVisualizer radii
+                if (zoneVisualizer != null)
+                {
+                    zoneVisualizer.UpdateRadii(new Vector2(innerRadius.x / 4, innerRadius.y / 2), new Vector2(middleRadius.x / 4, middleRadius.y / 2));
+                }
+                else
+                {
+                    Debug.LogWarning("VrsUrpController: ZoneVisualizer reference is not set.");
                 }
             }
         }
@@ -184,6 +198,17 @@ namespace FoveatedRenderingVRS_BIRP
 
                 VrsBirpApi.SetRegionRadii(area, clampedRadii);
                 GL.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+                
+                // Update ZoneVisualizer radii if INNER or MIDDLE
+                if (zoneVisualizer != null)
+                {
+                    if (area == TargetArea.INNER || area == TargetArea.MIDDLE)
+                    {
+                        Vector2 newInnerRadius = area == TargetArea.INNER ? radii : innerRadius;
+                        Vector2 newMiddleRadius = area == TargetArea.MIDDLE ? radii : middleRadius;
+                        zoneVisualizer.UpdateRadii(newInnerRadius, newMiddleRadius);
+                    }
+                }
             }
         }
 
@@ -246,6 +271,18 @@ namespace FoveatedRenderingVRS_BIRP
                 GL.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
             }
         }
+        
+        void Update()
+        {
+            if (renderingInitialized && zoneVisualizer != null)
+            {
+                // Get mouse position
+                Vector2 mousePosition = Input.mousePosition;
+
+                // Update the visualizer's center to the mouse position
+                zoneVisualizer.SetCenter(mousePosition);
+            }
+        }
 
         void OnDisable()
         {
@@ -266,7 +303,6 @@ namespace FoveatedRenderingVRS_BIRP
 
         void OnPreRender()
         {
-            VrsBirpApi.SetRenderMode(RenderMode.RENDER_MODE_MONO);
         }
     }
 }

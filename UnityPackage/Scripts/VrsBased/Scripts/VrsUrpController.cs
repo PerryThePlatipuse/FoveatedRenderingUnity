@@ -1,7 +1,9 @@
+// Assets/Plugins/VrsBased/Scripts/VrsUrpController.cs
+
 using UnityEngine;
 using UnityEngine.Rendering;
 using FoveatedRenderingVRS;
-using GazeTracking;
+using GazeTracking; // Namespace where ZoneVisualizer resides
 
 /// <summary>
 /// Equivalent controller for URP that configures the foveated rendering plugin.
@@ -13,10 +15,8 @@ public class VrsUrpController : MonoBehaviour
 {
     private bool renderingInitialized = false;
 
-    [SerializeField]
-    private ShadingRatePreset currentShadingPreset = ShadingRatePreset.SHADING_RATE_HIGHEST_PERFORMANCE;
-    [SerializeField]
-    private ShadingPatternPreset currentPatternPreset = ShadingPatternPreset.SHADING_PATTERN_NARROW;
+    private ShadingRatePreset currentShadingPreset = ShadingRatePreset.SHADING_RATE_CUSTOM;
+    private ShadingPatternPreset currentPatternPreset = ShadingPatternPreset.SHADING_PATTERN_CUSTOM;
 
     [SerializeField]
     private Vector2 innerRadius = new Vector2(0.25f, 0.25f);
@@ -26,11 +26,11 @@ public class VrsUrpController : MonoBehaviour
     private Vector2 peripheralRadius = new Vector2(1.0f, 1.0f);
 
     [SerializeField]
-    private ShadingRate innerRate = ShadingRate.X1_PER_PIXEL;
+    private ShadingRate innerRate = ShadingRate.NORMAL;
     [SerializeField]
-    private ShadingRate middleRate = ShadingRate.X1_PER_2X2_PIXELS;
+    private ShadingRate middleRate = ShadingRate.REDUCTION_2X2;
     [SerializeField]
-    private ShadingRate peripheralRate = ShadingRate.X1_PER_4X4_PIXELS;
+    private ShadingRate peripheralRate = ShadingRate.REDUCTION_4X4;
 
     private Camera mainCamera;
 
@@ -50,20 +50,30 @@ public class VrsUrpController : MonoBehaviour
         {
             bool isGazeAttached = VrsGazeUpdater.AttachGazeUpdater(gameObject);
 
+            if (!isGazeAttached)
+            {
+                Debug.LogWarning("VrsUrpController: Failed to attach GazeUpdater.");
+            }
+
             ConfigureShadingRatePreset(currentShadingPreset);
             ConfigureShadingPatternPreset(currentPatternPreset);
 
             VrsPluginApi.UpdateGazeDirection(Vector3.forward);
             GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
 
+            // Update ZoneVisualizer radii
             if (zoneVisualizer != null)
             {
-                zoneVisualizer.UpdateRadii(innerRadius, middleRadius);
+                zoneVisualizer.UpdateRadii(new Vector2(innerRadius.x / 4, innerRadius.y / 2), new Vector2(middleRadius.x / 4, middleRadius.y / 2));
             }
             else
             {
-                Debug.LogWarning("ZoneVisualizer reference is not set in VrsUrpController.");
+                Debug.LogWarning("VrsUrpController: ZoneVisualizer reference is not set.");
             }
+        }
+        else
+        {
+            Debug.LogError("VrsUrpController: Failed to initialize foveated rendering.");
         }
     }
 
@@ -79,6 +89,18 @@ public class VrsUrpController : MonoBehaviour
         if (gazeUpdater != null)
         {
             gazeUpdater.enabled = false;
+        }
+    }
+
+    void Update()
+    {
+        if (renderingInitialized && zoneVisualizer != null)
+        {
+            // Get mouse position
+            Vector2 mousePosition = Input.mousePosition;
+
+            // Update the visualizer's center to the mouse position
+            zoneVisualizer.SetCenter(mousePosition);
         }
     }
 
@@ -134,6 +156,7 @@ public class VrsUrpController : MonoBehaviour
             VrsPluginApi.ConfigureRegionRadii(area, radii);
             GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
 
+            // Update ZoneVisualizer radii if INNER or MIDDLE
             if (zoneVisualizer != null)
             {
                 if (area == TargetArea.INNER || area == TargetArea.MIDDLE)
