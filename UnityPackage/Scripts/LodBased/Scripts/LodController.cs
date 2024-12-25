@@ -57,7 +57,6 @@ public class FoveatedLODController : MonoBehaviour
         {
             group.ForceLOD(-1);
 
-            int curLOD = GetCurrentLODIndex(group);
 
             Vector3 screenPos = Camera.main.WorldToScreenPoint(group.transform.position);
 

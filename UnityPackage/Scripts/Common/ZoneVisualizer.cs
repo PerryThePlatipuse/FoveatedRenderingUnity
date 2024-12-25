@@ -26,7 +26,7 @@ namespace GazeTracking
         [Tooltip("Normalized radii for the middle ellipse (0 to 1).")]
         public Vector2 middleRadius = new Vector2(0.33f, 0.33f);
         [Tooltip("Color of the middle ellipse border.")]
-        public Color middleColor = Color.green;
+        public Color middleColor = Color.red;
 
         private Image innerCircleImage;
         private Image middleCircleImage;

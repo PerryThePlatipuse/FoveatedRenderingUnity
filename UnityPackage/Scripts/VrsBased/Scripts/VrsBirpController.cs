@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 using System;
 using FoveatedRenderingVRS;
 
+using GazeTracking;
 namespace FoveatedRenderingVRS_BIRP
 {
     public static class FoveatedRenderingExtensions
@@ -29,7 +30,7 @@ namespace FoveatedRenderingVRS_BIRP
     public class VrsBirpController : MonoBehaviour
     {
         private Camera mainCamera = null;
-        private CommandBufferManager bufferManager = new CommandBufferManager();
+        private VrsBirpCommandBufferManager bufferManager = new VrsBirpCommandBufferManager();
 
         private bool renderingInitialized = false;
         private bool renderingActive = false;
@@ -95,7 +96,7 @@ namespace FoveatedRenderingVRS_BIRP
             if (renderingInitialized)
             {
                 currentShadingPreset = preset.ClampValue(ShadingRatePreset.SHADING_RATE_HIGHEST_PERFORMANCE, ShadingRatePreset.SHADING_RATE_MAX);
-                VrsBirpApi.SetFoveatedRenderingShadingRatePreset(currentShadingPreset);
+                VrsPluginApi.SetShadingRatePreset(currentShadingPreset);
 
                 if (currentShadingPreset == ShadingRatePreset.SHADING_RATE_CUSTOM)
                 {
@@ -104,7 +105,7 @@ namespace FoveatedRenderingVRS_BIRP
                     AssignShadingRate(TargetArea.PERIPHERAL, peripheralRate);
                 }
 
-                GL.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+                GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
             }
         }
 
@@ -118,7 +119,7 @@ namespace FoveatedRenderingVRS_BIRP
             if (renderingInitialized)
             {
                 currentPatternPreset = preset.ClampValue(ShadingPatternPreset.SHADING_PATTERN_WIDE, ShadingPatternPreset.SHADING_PATTERN_MAX);
-                VrsBirpApi.SetFoveatedRenderingPatternPreset(currentPatternPreset);
+                VrsPluginApi.SetFoveationPatternPreset(currentPatternPreset);
 
                 if (currentPatternPreset == ShadingPatternPreset.SHADING_PATTERN_CUSTOM)
                 {
@@ -127,7 +128,7 @@ namespace FoveatedRenderingVRS_BIRP
                     AssignRegionRadius(TargetArea.PERIPHERAL, peripheralRadius);
                 }
 
-                GL.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+                GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
             }
         }
 
@@ -140,7 +141,7 @@ namespace FoveatedRenderingVRS_BIRP
         {
             if (renderingInitialized)
             {
-                var clampedRate = rate.ClampValue(ShadingRate.CULL, ShadingRate.X1_PER_4X4_PIXELS);
+                var clampedRate = rate.ClampValue(ShadingRate.CULL, ShadingRate.REDUCTION_4X4);
                 switch (area)
                 {
                     case TargetArea.INNER:
@@ -154,8 +155,8 @@ namespace FoveatedRenderingVRS_BIRP
                         break;
                 }
 
-                VrsBirpApi.SetShadingRate(area, clampedRate);
-                GL.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+                VrsPluginApi.ConfigureShadingRate(area, clampedRate);
+                GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
             }
         }
 
@@ -196,8 +197,8 @@ namespace FoveatedRenderingVRS_BIRP
                         break;
                 }
 
-                VrsBirpApi.SetRegionRadii(area, clampedRadii);
-                GL.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+                VrsPluginApi.ConfigureRegionRadii(area, clampedRadii);
+                GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
                 
                 // Update ZoneVisualizer radii if INNER or MIDDLE
                 if (zoneVisualizer != null)
@@ -206,7 +207,7 @@ namespace FoveatedRenderingVRS_BIRP
                     {
                         Vector2 newInnerRadius = area == TargetArea.INNER ? radii : innerRadius;
                         Vector2 newMiddleRadius = area == TargetArea.MIDDLE ? radii : middleRadius;
-                        zoneVisualizer.UpdateRadii(newInnerRadius, newMiddleRadius);
+                        zoneVisualizer.UpdateRadii(new Vector2(newInnerRadius.x / 4, newInnerRadius.y / 2), new Vector2(newMiddleRadius.x / 4, newMiddleRadius.y / 2));
                     }
                 }
             }
@@ -229,46 +230,45 @@ namespace FoveatedRenderingVRS_BIRP
 
         void OnEnable()
         {
-            VrsBirpApi.InitializeNativeLogger(message => Debug.Log(message));
 
             mainCamera = GetComponent<Camera>();
-            renderingInitialized = VrsBirpApi.InitializeFoveatedRendering(mainCamera.fieldOfView, mainCamera.aspect);
+            renderingInitialized = VrsPluginApi.InitializeFoveatedRendering(mainCamera.fieldOfView, mainCamera.aspect);
             if (renderingInitialized)
             {
                 var currentPath = mainCamera.actualRenderingPath;
                 if (currentPath == RenderingPath.Forward)
                 {
                     bufferManager.AddCommandBuffer("Enable Foveated Rendering", CameraEvent.BeforeForwardOpaque,
-                        cmd => cmd.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.ENABLE_FOVEATED_RENDERING),
+                        cmd => cmd.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.ENABLE_FOVEATED_RENDERING),
                         cmd => cmd.ClearRenderTarget(false, true, Color.black));
 
                     bufferManager.AddCommandBuffer("Disable Foveated Rendering", CameraEvent.AfterForwardAlpha,
-                        cmd => cmd.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.DISABLE_FOVEATED_RENDERING));
+                        cmd => cmd.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.DISABLE_FOVEATED_RENDERING));
                 }
                 else if (currentPath == RenderingPath.DeferredShading)
                 {
                     bufferManager.AddCommandBuffer("Enable Foveated Rendering - GBuffer", CameraEvent.BeforeGBuffer,
-                        cmd => cmd.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.ENABLE_FOVEATED_RENDERING),
+                        cmd => cmd.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.ENABLE_FOVEATED_RENDERING),
                         cmd => cmd.ClearRenderTarget(false, true, Color.black));
 
                     bufferManager.AddCommandBuffer("Disable Foveated Rendering - GBuffer", CameraEvent.AfterGBuffer,
-                        cmd => cmd.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.DISABLE_FOVEATED_RENDERING));
+                        cmd => cmd.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.DISABLE_FOVEATED_RENDERING));
 
                     bufferManager.AddCommandBuffer("Enable Foveated Rendering - Alpha", CameraEvent.BeforeForwardAlpha,
-                        cmd => cmd.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.ENABLE_FOVEATED_RENDERING));
+                        cmd => cmd.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.ENABLE_FOVEATED_RENDERING));
 
                     bufferManager.AddCommandBuffer("Disable Foveated Rendering - Alpha", CameraEvent.AfterForwardAlpha,
-                        cmd => cmd.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.DISABLE_FOVEATED_RENDERING));
+                        cmd => cmd.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.DISABLE_FOVEATED_RENDERING));
                 }
 
                 ToggleFoveatedRendering(true);
-                bool isGazeAttached = VrsBirpGazeUpdater.AttachGazeUpdater(gameObject);
+                bool isGazeAttached = VrsGazeUpdater.AttachGazeUpdater(gameObject);
 
                 ConfigureShadingRatePreset(currentShadingPreset);
                 ConfigureShadingPatternPreset(currentPatternPreset);
 
-                VrsBirpApi.SetNormalizedGazeDirection(new Vector3(0.0f, 0.0f, 1.0f), new Vector3(0.0f, 0.0f, 1.0f));
-                GL.IssuePluginEvent(VrsBirpApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
+                VrsPluginApi.UpdateGazeDirection(new Vector3(0.0f, 0.0f, 1.0f));
+                GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
             }
         }
         
@@ -289,12 +289,11 @@ namespace FoveatedRenderingVRS_BIRP
             ToggleFoveatedRendering(false);
             bufferManager.ClearAllBuffers();
 
-            VrsBirpApi.ReleaseFoveatedRendering();
-            VrsBirpApi.ReleaseNativeLogger();
+            VrsPluginApi.ReleaseFoveatedRendering();
 
             renderingInitialized = false;
 
-            var gazeUpdater = GetComponent<VrsBirpGazeUpdater>();
+            var gazeUpdater = GetComponent<VrsGazeUpdater>();
             if (gazeUpdater != null)
             {
                 gazeUpdater.enabled = false;

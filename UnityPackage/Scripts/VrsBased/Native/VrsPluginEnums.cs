@@ -52,17 +52,17 @@ namespace FoveatedRenderingVRS
     /// </summary>
     public enum ShadingRate
     {
-        CULL,                   // No shading
-        X16_PER_PIXEL,          // 16x supersampling
-        X8_PER_PIXEL,           // 8x supersampling
-        X4_PER_PIXEL,           // 4x supersampling
-        X2_PER_PIXEL,           // 2x supersampling
-        X1_PER_PIXEL,           // 1 shading pass / 1 pixel (normal shading)
-        X1_PER_2X1_PIXELS,      // 1 shading pass / 2 pixels horizontally
-        X1_PER_1X2_PIXELS,      // 1 shading pass / 2 pixels vertically
-        X1_PER_2X2_PIXELS,      // 1 shading pass / 4 pixels
-        X1_PER_4X2_PIXELS,      // 1 shading pass / 8 pixels
-        X1_PER_2X4_PIXELS,      // 1 shading pass / 8 pixels
-        X1_PER_4X4_PIXELS       // 1 shading pass / 16 pixels
+        CULL,               // No shading
+        SUPESAMPLING_X16,   // 16x supersampling
+        SUPESAMPLING_X8,    // 8x supersampling
+        SUPESAMPLING_X4,    // 4x supersampling
+        SUPESAMPLING_X2,    // 2x supersampling
+        NORMAL,             // 1 shading pass / 1 pixel (normal shading)
+        REDUCTION_2X1,      // 1 shading pass / 2 pixels horizontally
+        REDUCTION_1X2,      // 1 shading pass / 2 pixels vertically
+        REDUCTION_2X2,      // 1 shading pass / 4 pixels
+        REDUCTION_4X2,      // 1 shading pass / 8 pixels
+        REDUCTION_2X4,      // 1 shading pass / 8 pixels
+        REDUCTION_4X4       // 1 shading pass / 16 pixels
     };
 }
