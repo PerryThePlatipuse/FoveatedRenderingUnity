@@ -14,12 +14,12 @@ namespace FoveatedRenderingVRS
 
         private void OnEnable()
         {
-            GazeUpdater.Initialize();
+            GazePluginUpdater.Initialize();
         }
 
         private void OnDisable()
         {
-            GazeUpdater.Cleanup();
+            GazePluginUpdater.Cleanup();
         }
 
         void Update()
@@ -29,7 +29,7 @@ namespace FoveatedRenderingVRS
 
         private void RefreshGazeDirection()
         {
-            // Vector2 normalizedDir = GazeUpdater.GetGazeDirectionVector();
+            // Vector2 normalizedDir = GazePluginUpdater.GetGazeDirectionVector();
             Vector3 mousePos = Input.mousePosition;
 
             // Normalize X and Y coordinates to the range -1 to 1

@@ -53,6 +53,9 @@ namespace FoveatedRenderingVRS_BIRP
         private ShadingRate middleRate = ShadingRate.REDUCTION_2X2;
         [SerializeField]
         private ShadingRate peripheralRate = ShadingRate.REDUCTION_4X4;
+
+        [SerializeField]
+        private bool enableZoneVisualizer = true;
         
         [Header("Zone Visualizer")]
         [Tooltip("Reference to the ZoneVisualizer component.")]
@@ -79,7 +82,10 @@ namespace FoveatedRenderingVRS_BIRP
                 // Update ZoneVisualizer radii
                 if (zoneVisualizer != null)
                 {
-                    zoneVisualizer.UpdateRadii(new Vector2(innerRadius.x / 4, innerRadius.y / 2), new Vector2(middleRadius.x / 4, middleRadius.y / 2));
+                    if (enableZoneVisualizer) {
+                        zoneVisualizer.UpdateRadii(new Vector2(innerRadius.x / 4, innerRadius.y / 2), new Vector2(middleRadius.x / 4, middleRadius.y / 2));
+                    }
+
                 }
                 else
                 {
@@ -203,7 +209,7 @@ namespace FoveatedRenderingVRS_BIRP
                 // Update ZoneVisualizer radii if INNER or MIDDLE
                 if (zoneVisualizer != null)
                 {
-                    if (area == TargetArea.INNER || area == TargetArea.MIDDLE)
+                    if (enableZoneVisualizer && area == TargetArea.INNER || area == TargetArea.MIDDLE)
                     {
                         Vector2 newInnerRadius = area == TargetArea.INNER ? radii : innerRadius;
                         Vector2 newMiddleRadius = area == TargetArea.MIDDLE ? radii : middleRadius;
@@ -274,7 +280,7 @@ namespace FoveatedRenderingVRS_BIRP
         
         void Update()
         {
-            if (renderingInitialized && zoneVisualizer != null)
+            if (renderingInitialized && if enableZoneVisualizer && zoneVisualizer != null)
             {
                 // Get mouse position
                 Vector2 mousePosition = Input.mousePosition;

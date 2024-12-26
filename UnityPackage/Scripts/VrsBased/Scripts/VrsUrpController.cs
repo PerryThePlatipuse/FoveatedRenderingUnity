@@ -32,6 +32,9 @@ public class VrsUrpController : MonoBehaviour
     [SerializeField]
     private ShadingRate peripheralRate = ShadingRate.REDUCTION_4X4;
 
+    [SerializeField]
+    private bool enableZoneVisualizer = true;
+
     private Camera mainCamera;
 
     [Header("Zone Visualizer")]

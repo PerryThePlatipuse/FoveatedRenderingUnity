@@ -1,10 +1,36 @@
 using System;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace GazeTracking
 {
-    public static class GazeUpdater
+    public abstract class GazeUpdater
+    {
+        public abstract void Initialize();
+        public abstract void Cleanup();
+        public abstract Vector2 GetGazeDirectionVector();
+    }
+
+    public class GazeMouseUpdater : GazeUpdater
+    {
+        public override void Initialize()
+        {
+        }
+
+        public override void Cleanup()
+        {
+        }
+
+        public override Vector2 GetGazeDirectionVector()
+        {
+            Vector3 mousePos = Input.mousePosition;
+            float normalizedX = (mousePos.x / Screen.width) * 2f - 1f;
+            float normalizedY = (mousePos.y / Screen.height) * 2f - 1f;
+            normalizedX *= -1;
+            return new Vector2(-normalizedX, normalizedY);
+        }
+    }
+
+    public class GazePluginUpdater : GazeUpdater
     {
         private const string DllName = "GazeTracking";
 
@@ -19,7 +45,7 @@ namespace GazeTracking
 
         private static bool isInitialized = false;
 
-        public static void Initialize()
+        public override void Initialize()
         {
             if (!isInitialized)
             {
@@ -28,7 +54,7 @@ namespace GazeTracking
             }
         }
 
-        public static void Cleanup()
+        public override void Cleanup()
         {
             if (isInitialized)
             {
@@ -37,7 +63,7 @@ namespace GazeTracking
             }
         }
 
-        public static Vector2 GetGazeDirectionVector()
+        public override Vector2 GetGazeDirectionVector()
         {
             GetGazeDirection(out float x, out float y);
             return new Vector2(-x, y);
