@@ -35,17 +35,15 @@ namespace FoveatedRenderingVRS_BIRP
         private bool renderingInitialized = false;
         private bool renderingActive = false;
 
-        [SerializeField]
         private ShadingRatePreset currentShadingPreset = ShadingRatePreset.SHADING_RATE_CUSTOM;
-        [SerializeField]
         private ShadingPatternPreset currentPatternPreset = ShadingPatternPreset.SHADING_PATTERN_CUSTOM;
 
         [SerializeField]
-        private Vector2 innerRadius = new Vector2(0.25f, 0.25f);
+        private Vector2 innerRadius = new Vector2(0.7f, 0.4f);
         [SerializeField]
-        private Vector2 middleRadius = new Vector2(0.33f, 0.33f);
+        private Vector2 middleRadius = new Vector2(1, 0.7f);
         [SerializeField]
-        private Vector2 peripheralRadius = new Vector2(1.0f, 1.0f);
+        private Vector2 peripheralRadius = new Vector2(5, 5);
 
         [SerializeField]
         private ShadingRate innerRate = ShadingRate.NORMAL;

@@ -2,6 +2,9 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
+
 
 namespace GazeTracking
 {
@@ -155,13 +158,13 @@ namespace GazeTracking
                 Debug.LogError("ZoneVisualizer: Canvas component is missing.");
                 return;
             }
-
-            // Convert screen position to canvas anchored position
             Vector2 canvasSize = canvas.GetComponent<RectTransform>().sizeDelta;
-            Vector2 anchoredPosition = screenPosition - new Vector2(canvasSize.x / 2f, canvasSize.y / 2f);
+            screenPosition.x = canvasSize.x * (-screenPosition.x + 1) / 2;
+            screenPosition.y = canvasSize.y * (screenPosition.y + 1) / 2;
+            Debug.Log(screenPosition);
 
-            innerRectTransform.anchoredPosition = anchoredPosition;
-            middleRectTransform.anchoredPosition = anchoredPosition;
+            innerRectTransform.anchoredPosition = screenPosition;
+            middleRectTransform.anchoredPosition = screenPosition;
         }
     }
 }

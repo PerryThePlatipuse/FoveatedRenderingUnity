@@ -14,3 +14,6 @@ GazeTracking/x64
 *.meta
 !UnityPackage/Prefabs/Circle.png.meta
 !UnityPackage/Prefabs/CircleBorder.prefab.meta
+!Demo/Prefabs/Background.png.meta
+!Demo/Prefabs/Canvas.prefab.meta
+!Demo/Scenes/SampleScene.unity.meta

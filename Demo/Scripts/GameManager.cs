@@ -8,6 +8,8 @@ public class GameManager : MonoBehaviour
     public string SelectedGazeMode;
     public string SelectedGameMode;
     public string SelectedMethod;
+    public bool IsVRS;
+    public bool IsLOD;
     public bool IsBorderOn;
 
     void Awake()
@@ -42,9 +44,15 @@ public class GameManager : MonoBehaviour
         Debug.Log("Border is " + (isOn ? "On" : "Off"));
     }
 
-    public void SetMethod(string method)
+    public void SetVRS(bool isOn)
     {
-        SelectedMethod = method;
-        Debug.Log("Game Mode set to: " + method);
+        IsVRS = isOn;
+        Debug.Log("VRS is " + (isOn ? "On" : "Off"));
+    }
+
+    public void SetLOD(bool isOn)
+    {
+        IsLOD = isOn;
+        Debug.Log("VRS is " + (isOn ? "On" : "Off"));
     }
 }

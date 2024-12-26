@@ -19,11 +19,11 @@ public class VrsUrpController : MonoBehaviour
     private ShadingPatternPreset currentPatternPreset = ShadingPatternPreset.SHADING_PATTERN_CUSTOM;
 
     [SerializeField]
-    private Vector2 innerRadius = new Vector2(0.25f, 0.25f);
+    private Vector2 innerRadius = new Vector2(0.7f, 0.4f);
     [SerializeField]
-    private Vector2 middleRadius = new Vector2(0.33f, 0.33f);
+    private Vector2 middleRadius = new Vector2(1, 0.7f);
     [SerializeField]
-    private Vector2 peripheralRadius = new Vector2(1.0f, 1.0f);
+    private Vector2 peripheralRadius = new Vector2(5, 5);
 
     [SerializeField]
     private ShadingRate innerRate = ShadingRate.NORMAL;
@@ -39,6 +39,17 @@ public class VrsUrpController : MonoBehaviour
     [SerializeField]
     private ZoneVisualizer zoneVisualizer;
 
+    [SerializeField]
+    private bool BorderOn = true;
+
+    [Header("Gaze Tracking Settings")]
+    [Tooltip("Select the gaze tracking method.")]
+    [SerializeField]
+    private GazeTrackingMethod gazeTrackingMethod = GazeTrackingMethod.Plugin;
+
+    // Reference to the GazeUpdater for dynamic method switching
+    private VrsGazeUpdater gazeUpdater;
+
     void OnEnable()
     {
         mainCamera = GetComponent<Camera>();
@@ -48,12 +59,16 @@ public class VrsUrpController : MonoBehaviour
 
         if (renderingInitialized)
         {
-            bool isGazeAttached = VrsGazeUpdater.AttachGazeUpdater(gameObject);
+            // Attach and configure GazeUpdater
+            bool isGazeAttached = VrsGazeUpdater.AttachGazeUpdater(gameObject, gazeTrackingMethod);
 
             if (!isGazeAttached)
             {
                 Debug.LogWarning("VrsUrpController: Failed to attach GazeUpdater.");
             }
+
+            // Store reference for dynamic switching
+            gazeUpdater = GetComponent<VrsGazeUpdater>();
 
             ConfigureShadingRatePreset(currentShadingPreset);
             ConfigureShadingPatternPreset(currentPatternPreset);
@@ -64,7 +79,13 @@ public class VrsUrpController : MonoBehaviour
             // Update ZoneVisualizer radii
             if (zoneVisualizer != null)
             {
-                zoneVisualizer.UpdateRadii(new Vector2(innerRadius.x / 4, innerRadius.y / 2), new Vector2(middleRadius.x / 4, middleRadius.y / 2));
+                if (BorderOn)
+                {
+                    zoneVisualizer.UpdateRadii(
+                        new Vector2(innerRadius.x / 4, innerRadius.y / 2),
+                        new Vector2(middleRadius.x / 4, middleRadius.y / 2)
+                    );
+                }
             }
             else
             {
@@ -85,7 +106,6 @@ public class VrsUrpController : MonoBehaviour
             renderingInitialized = false;
         }
 
-        var gazeUpdater = GetComponent<VrsGazeUpdater>();
         if (gazeUpdater != null)
         {
             gazeUpdater.enabled = false;
@@ -94,13 +114,9 @@ public class VrsUrpController : MonoBehaviour
 
     void Update()
     {
-        if (renderingInitialized && zoneVisualizer != null)
+        if (BorderOn && renderingInitialized && zoneVisualizer != null)
         {
-            // Get mouse position
-            Vector2 mousePosition = Input.mousePosition;
-
-            // Update the visualizer's center to the mouse position
-            zoneVisualizer.SetCenter(mousePosition);
+            zoneVisualizer.SetCenter(new Vector2(gazeUpdater.x, gazeUpdater.y));
         }
     }
 
@@ -157,7 +173,7 @@ public class VrsUrpController : MonoBehaviour
             GL.IssuePluginEvent(VrsPluginApi.GetRenderEventFunc(), (int)FoveatedEventID.UPDATE_GAZE);
 
             // Update ZoneVisualizer radii if INNER or MIDDLE
-            if (zoneVisualizer != null)
+            if (BorderOn && zoneVisualizer != null)
             {
                 if (area == TargetArea.INNER || area == TargetArea.MIDDLE)
                 {
@@ -166,6 +182,21 @@ public class VrsUrpController : MonoBehaviour
                     zoneVisualizer.UpdateRadii(newInnerRadius, newMiddleRadius);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Switches the gaze tracking method at runtime.
+    /// </summary>
+    /// <param name="newMethod">The new gaze tracking method to use.</param>
+    public void SwitchGazeTrackingMethod(GazeTrackingMethod newMethod)
+    {
+        if (gazeUpdater != null && gazeTrackingMethod != newMethod)
+        {
+            Debug.Log($"VrsUrpController: Switching gaze tracking method to {newMethod}.");
+
+            gazeTrackingMethod = newMethod;
+            gazeUpdater.SetGazeTrackingMethod(newMethod);
         }
     }
 }

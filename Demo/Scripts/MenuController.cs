@@ -9,7 +9,8 @@ public class MenuController : MonoBehaviour
     public TMP_Dropdown sceneDropdown;
     public TMP_Dropdown gazeModeDropdown;
     public TMP_Dropdown gameModeDropdown;
-    public TMP_Dropdown methodDropdown;
+    public Toggle VRSToggle;
+    public Toggle LODToggle;
     public Toggle borderToggle;
 
     public Button startButton;
@@ -17,7 +18,8 @@ public class MenuController : MonoBehaviour
     public static string SelectedScene;
     public static string SelectedGazeMode;
     public static string SelectedGameMode;
-    public static string SelectedMethod;
+    public static bool IsVRS;
+    public static bool IsLOD;
     public static bool IsBorderOn;
 
     void Start()
@@ -30,13 +32,12 @@ public class MenuController : MonoBehaviour
         SelectedScene = sceneDropdown.options[sceneDropdown.value].text;
         SelectedGazeMode = gazeModeDropdown.options[gazeModeDropdown.value].text;
         SelectedGameMode = gameModeDropdown.options[gameModeDropdown.value].text;
-        SelectedMethod = methodDropdown.options[methodDropdown.value].text;
         IsBorderOn = borderToggle.isOn;
+        IsVRS = VRSToggle.isOn;
+        IsLOD = LODToggle.isOn;
 
         ApplySettings();
         
-        if ()
-
         SceneManager.LoadScene(SelectedScene);
     }
 
@@ -45,6 +46,7 @@ public class MenuController : MonoBehaviour
         GameManager.Instance.SetGazeMode(SelectedGazeMode);
         GameManager.Instance.SetGameMode(SelectedGameMode);
         GameManager.Instance.SetBorder(IsBorderOn);
-        GameManager.Instance.SetMethod(SelectedMethod);
+        GameManager.Instance.SetVRS(IsVRS);
+        GameManager.Instance.SetLOD(IsLOD);
     }
 }
