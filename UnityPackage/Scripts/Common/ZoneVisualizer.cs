@@ -153,6 +153,8 @@ namespace GazeTracking
         /// <param name="screenPosition">Screen position in pixels.</param>
         public void SetCenter(Vector2 screenPosition)
         {
+            screenPosition.x = ()screenPosition.x + 1) / 2;
+            screenPosition.y = ()screenPosition.y + 1) / 2;
             if (canvas == null)
             {
                 Debug.LogError("ZoneVisualizer: Canvas component is missing.");
