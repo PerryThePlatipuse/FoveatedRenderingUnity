@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using FoveatedRenderingVRS;
 using GazeTracking; // Namespace where ZoneVisualizer resides
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Equivalent controller for URP that configures the foveated rendering plugin.
@@ -32,9 +33,6 @@ public class VrsUrpController : MonoBehaviour
     [SerializeField]
     private ShadingRate peripheralRate = ShadingRate.REDUCTION_4X4;
 
-    [SerializeField]
-    private bool enableZoneVisualizer = true;
-
     private Camera mainCamera;
 
     [Header("Zone Visualizer")]
@@ -43,18 +41,25 @@ public class VrsUrpController : MonoBehaviour
     private ZoneVisualizer zoneVisualizer;
 
     [SerializeField]
-    private bool BorderOn = true;
+    public bool BorderOn = true;
 
     [Header("Gaze Tracking Settings")]
     [Tooltip("Select the gaze tracking method.")]
     [SerializeField]
-    private GazeTrackingMethod gazeTrackingMethod = GazeTrackingMethod.Plugin;
+    public GazeTrackingMethod gazeTrackingMethod = GazeTrackingMethod.Plugin;
 
     // Reference to the GazeUpdater for dynamic method switching
     private VrsGazeUpdater gazeUpdater;
 
     void OnEnable()
     {
+        if (!BorderOn)
+        {
+            zoneVisualizer.isVisualizationEnabled = false;
+        } else
+        {
+            zoneVisualizer.isVisualizationEnabled = true;
+        }
         mainCamera = GetComponent<Camera>();
 
         // Initialize foveated rendering
@@ -120,6 +125,10 @@ public class VrsUrpController : MonoBehaviour
         if (BorderOn && renderingInitialized && zoneVisualizer != null)
         {
             zoneVisualizer.SetCenter(new Vector2(gazeUpdater.x, gazeUpdater.y));
+        }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            SceneManager.LoadScene("SampleScene");
         }
     }
 

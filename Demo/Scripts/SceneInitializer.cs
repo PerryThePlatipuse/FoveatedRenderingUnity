@@ -1,8 +1,19 @@
 using UnityEngine;
+using GazeTracking;
 
+[DefaultExecutionOrder(-100)]
 public class SceneInitializer : MonoBehaviour
 {
-    void Start()
+    [SerializeField]
+    private Camera mainCamera;
+
+    [SerializeField]
+    private Canvas canvas;
+
+    private VrsUrpController _vrsUrpController;
+
+
+    void Awake()
     {
         if (GameManager.Instance != null)
         {
@@ -22,37 +33,121 @@ public class SceneInitializer : MonoBehaviour
 
     void ApplySettings(string gazeMode, string gameMode, bool border, bool vrs, bool lod)
     {
-        switch (gazeMode)
+        if (mainCamera == null)
         {
-            case "Webcam":
-                break;
-            case "Mobile":
-                break;
-            case "Mouse":
-                break;
+            Debug.LogError("Main Camera is not assigned in the SceneInitializer.");
+            return;
         }
 
-        switch (gameMode)
+        // 1) VRS Approach
+        if (vrs)
         {
-            case "Benchmark":
-                break;
-            case "Free movement":
-                break;
-        }
+            EnableScript<VrsUrpController>();
+            _vrsUrpController = mainCamera.GetComponent<VrsUrpController>();
+            if (_vrsUrpController == null)
+            {
+                Debug.LogError("VrsUrpController component not found on the Main Camera.");
+                return;
+            }
 
-        if (border)
-        {
+            // Choose plugin or mouse for VRS
+            switch (gazeMode)
+            {
+                case "Webcam":
+                    _vrsUrpController.gazeTrackingMethod = FoveatedRenderingVRS.GazeTrackingMethod.Plugin;
+                    break;
+                case "Mouse":
+                    _vrsUrpController.gazeTrackingMethod = FoveatedRenderingVRS.GazeTrackingMethod.Mouse;
+                    break;
+            }
+
+            _vrsUrpController.BorderOn = border;
         }
         else
         {
+            // If not using VRS, hide the ZoneVisualizer
+            if (canvas != null)
+            {
+                ZoneVisualizer z = canvas.GetComponent<ZoneVisualizer>();
+                if (z != null) z.isVisualizationEnabled = false;
+            }
+            DisableScript<VrsUrpController>();
         }
 
-        if (vrs)
+        // 2) Game mode
+        switch (gameMode)
         {
+            case "Benchmark":
+                DisableScript<CameraMover>();
+                EnableScript<CameraRoutePlayer>();
+                break;
+            case "Free movement":
+                DisableScript<CameraRoutePlayer>();
+                EnableScript<CameraMover>();
+                break;
         }
 
+        // 3) LOD Approach
         if (lod)
         {
+            EnableScript<FoveatedLODController>();
+            FoveatedLODController lodController = mainCamera.GetComponent<FoveatedLODController>();
+            if (lodController != null)
+            {
+                if (vrs)
+                {
+                    lodController.overrideZoneVisualizer = false;
+                    lodController.overrideGaze = false;
+                }
+                else
+                {
+                    lodController.overrideZoneVisualizer = true;
+                    lodController.overrideGaze = true;
+                }
+
+                bool lodShowBorder = border;
+                bool lodUsePluginGaze = (gazeMode == "Webcam");
+
+                lodController.showBorder = lodShowBorder;
+                lodController.usePluginGaze = lodUsePluginGaze;
+            }
+            else
+            {
+                Debug.LogWarning("FoveatedLODController component not found on Main Camera.");
+            }
+        }
+        else
+        {
+            DisableScript<FoveatedLODController>();
+        }
+    }
+
+
+    private void DisableScript<T>() where T : MonoBehaviour
+    {
+        T script = mainCamera.GetComponent<T>();
+        if (script != null)
+        {
+            script.enabled = false;
+            Debug.Log($"Disabled script: {typeof(T).Name}");
+        }
+        else
+        {
+            Debug.LogWarning($"Script {typeof(T).Name} not found on Main Camera.");
+        }
+    }
+
+    private void EnableScript<T>() where T : MonoBehaviour
+    {
+        T script = mainCamera.GetComponent<T>();
+        if (script != null)
+        {
+            script.enabled = true;
+            Debug.Log($"Enabled script: {typeof(T).Name}");
+        }
+        else
+        {
+            Debug.LogWarning($"Script {typeof(T).Name} not found on Main Camera.");
         }
     }
 }

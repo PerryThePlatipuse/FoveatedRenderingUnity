@@ -1,98 +1,120 @@
 using UnityEngine;
 using System.Linq;
 using GazeTracking;
-using System.Collections.Generic;
+using FoveatedRenderingVRS;
+using UnityEngine.SceneManagement;
 
 public class FoveatedLODController : MonoBehaviour
 {
-    private List<LODGroup> lodGroups = new List<LODGroup>();
-    private List<Terrain> terrains = new List<Terrain>();
+    private LODGroup[] lodGroups;
 
-    public float fovealRadius = 0.2f;
-    public float midFovealRadius = 0.4f;
+    [Header("LOD Ellipse Radii (Normalized)")]
+    [Tooltip("Foveal region ellipse radii in normalized screen coords")]
+    public Vector2 fovealRadii = new Vector2(0.2f, 0.2f);
+
+    [Tooltip("Mid-foveal region ellipse radii in normalized screen coords")]
+    public Vector2 midFovealRadii = new Vector2(0.4f, 0.3f);
+
+    [Header("LOD Visualization & Gaze")]
+    [Tooltip("Show or hide the ellipse border (ZoneVisualizer)")]
+    public bool showBorder = true;
+
+    [Tooltip("Use the VRS plugin gaze or fallback to mouse")]
+    public bool usePluginGaze = true;
+
+    [Tooltip("If false, do not override the ellipse zone in ZoneVisualizer (when VRS is also on).")]
+    public bool overrideZoneVisualizer = true;
+
+    [Tooltip("If false, do not override the gaze center (when VRS is also on).")]
+    public bool overrideGaze = true;
 
     private ZoneVisualizer zoneVisualizer;
+    private VrsGazeUpdater gazeUpdater;
+    private bool pluginGazeActive;
 
     void Start()
     {
-        // Find all LODGroups in the scene
 #if UNITY_2023_1_OR_NEWER
-        LODGroup[] sceneLODs = FindObjectsByType<LODGroup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        lodGroups = FindObjectsByType<LODGroup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 #else
-        LODGroup[] sceneLODs = FindObjectsOfType<LODGroup>();
+        lodGroups = FindObjectsOfType<LODGroup>();
 #endif
-        lodGroups.AddRange(sceneLODs);
 
-        // Find all terrains in the scene
-        terrains.AddRange(FindObjectsOfType<Terrain>());
+        // Attempt to find a GazeUpdater from VRS
+        gazeUpdater = FindObjectOfType<VrsGazeUpdater>();
+        pluginGazeActive = (gazeUpdater != null) && usePluginGaze;
 
-        if (terrains.Count == 0)
-        {
-            Debug.LogWarning("No Terrain found in the scene.");
-        }
-
+        // Find the ZoneVisualizer
         zoneVisualizer = FindObjectOfType<ZoneVisualizer>();
-
         if (zoneVisualizer == null)
         {
-            Debug.LogError("ZoneVisualizer not found in the scene. Please add a ZoneVisualizer to your Canvas.");
+            Debug.LogError("FoveatedLODController: ZoneVisualizer not found in scene!");
         }
         else
         {
-            zoneVisualizer.UpdateRadii(new Vector2(fovealRadius, fovealRadius), new Vector2(midFovealRadius, midFovealRadius));
+            // If we’re allowed to override the ellipse
+            if (overrideZoneVisualizer)
+            {
+                zoneVisualizer.isVisualizationEnabled = showBorder;
+                zoneVisualizer.UpdateRadii(fovealRadii, midFovealRadii);
+            }
         }
     }
 
     void Update()
     {
-        Vector2 normalizedGazePos = GetNormalizedGazePosition();
+        // 1) Determine current normalized gaze
+        Vector2 normalizedGaze = pluginGazeActive
+            ? new Vector2(-gazeUpdater.x, gazeUpdater.y)
+            : GetNormalizedMousePosition();
 
-        if (zoneVisualizer != null)
+        // 2) If allowed to override the gaze center, apply to ZoneVisualizer
+        if (zoneVisualizer != null && overrideGaze && overrideZoneVisualizer)
         {
-            zoneVisualizer.SetCenter(Input.mousePosition);
+            zoneVisualizer.SetCenter(new Vector2(-normalizedGaze.x, normalizedGaze.y));
         }
 
-        UpdateLODGroups(normalizedGazePos);
-        UpdateTerrainLOD(normalizedGazePos);
+        // 3) Update LODs
+        UpdateLODGroups(normalizedGaze);
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            SceneManager.LoadScene("SampleScene");
+        }
     }
 
-    private Vector2 GetNormalizedGazePosition()
+    /// <summary>
+    /// Convert mouse pos to normalized [-1..1] screen coords
+    /// </summary>
+    private Vector2 GetNormalizedMousePosition()
     {
-        Vector3 mousePos = Input.mousePosition; // testing
-
-        float normalizedX = (mousePos.x / Screen.width) * 2f - 1f;
-        float normalizedY = (mousePos.y / Screen.height) * 2f - 1f;
-        return new Vector2(normalizedX, normalizedY);
+        Vector3 mousePos = Input.mousePosition;
+        float nx = (mousePos.x / Screen.width) * 2f - 1f;
+        float ny = (mousePos.y / Screen.height) * 2f - 1f;
+        return new Vector2(nx, ny);
     }
 
+    /// <summary>
+    /// For each LODGroup, measure distance from gaze and assign LOD accordingly.
+    /// </summary>
     private void UpdateLODGroups(Vector2 gazePos)
     {
-        if (Camera.main == null)
-            return;
+        if (Camera.main == null) return;
 
         foreach (LODGroup group in lodGroups)
         {
-            if (group == null)
-                continue;
-
-            group.ForceLOD(-1); // Reset to highest LOD
-
-            Vector3 worldPos = group.transform.position;
-            Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
-
-            // If the object is behind the camera, skip
-            if (screenPos.z < 0)
-                continue;
-
-            Vector2 normalizedScreenPos = new Vector2(
+            // Convert object pos to normalized [-1..1] coords
+            Vector3 screenPos = Camera.main.WorldToScreenPoint(group.transform.position);
+            Vector2 normPos = new Vector2(
                 (screenPos.x / Screen.width) * 2f - 1f,
                 (screenPos.y / Screen.height) * 2f - 1f
             );
 
-            float distance = Vector2.Distance(normalizedScreenPos, gazePos);
+            float dx = normPos.x - gazePos.x;
+            float dy = normPos.y - gazePos.y;
 
-            bool inFoveal = distance <= fovealRadius;
-            bool inMidFoveal = distance > fovealRadius && distance <= midFovealRadius;
+            bool inFoveal = IsWithinEllipse(dx, dy, fovealRadii);
+            bool inMidFoveal = !inFoveal && IsWithinEllipse(dx, dy, midFovealRadii);
 
             int targetLOD;
             if (inFoveal)
@@ -108,73 +130,18 @@ public class FoveatedLODController : MonoBehaviour
                 targetLOD = Mathf.Min(2, group.GetLODs().Length - 1);
             }
 
-            LOD[] lods = group.GetLODs();
-            targetLOD = Mathf.Clamp(targetLOD, 0, lods.Length - 1);
-
             group.ForceLOD(targetLOD);
         }
     }
 
-    private void UpdateTerrainLOD(Vector2 gazePos)
+    /// <summary>
+    /// Returns true if (dx, dy) is within the ellipse defined by 'radii'.
+    /// ellipse eq: (dx^2 / rx^2) + (dy^2 / ry^2) <= 1
+    /// </summary>
+    private bool IsWithinEllipse(float dx, float dy, Vector2 radii)
     {
-        foreach (Terrain terrain in terrains)
-        {
-            TerrainData terrainData = terrain.terrainData;
-            if (terrainData.treeInstances.Length == 0)
-                continue;
-
-            // Example approach: Adjust tree density based on distance from gaze point
-            // Note: Unity doesn't support dynamic tree density out of the box, so this requires a custom implementation
-            // This could involve enabling/disabling tree instances or swapping prototypes based on distance
-
-            // For demonstration, here's a simple approach to toggle tree visibility
-            // This is not optimized and is for illustrative purposes only
-
-            List<TreeInstance> treesToRemove = new List<TreeInstance>();
-            List<TreeInstance> treesToAdd = new List<TreeInstance>();
-
-            // Iterate through all tree instances
-            foreach (var tree in terrainData.treeInstances)
-            {
-                Vector3 worldPos = Vector3.Scale(tree.position, terrainData.size) + terrain.transform.position;
-                Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
-
-                // If the tree is behind the camera, skip
-                if (screenPos.z < 0)
-                    continue;
-
-                Vector2 normalizedScreenPos = new Vector2(
-                    (screenPos.x / Screen.width) * 2f - 1f,
-                    (screenPos.y / Screen.height) * 2f - 1f
-                );
-
-                float distance = Vector2.Distance(normalizedScreenPos, gazePos);
-
-                bool shouldBeVisible = distance <= midFovealRadius; // Example condition
-
-                // Implement your logic to add/remove trees based on shouldBeVisible
-                // Unity's Terrain API doesn't support removing individual trees at runtime efficiently
-                // Consider using alternative methods like shader-based fading or custom tree systems
-            }
-
-            // Apply changes if necessary
-            if (treesToRemove.Count > 0 || treesToAdd.Count > 0)
-            {
-                // Create a new list of trees
-                List<TreeInstance> currentTrees = terrainData.treeInstances.ToList();
-
-                // Remove trees
-                foreach (var tree in treesToRemove)
-                {
-                    currentTrees.Remove(tree);
-                }
-
-                // Add trees
-                currentTrees.AddRange(treesToAdd);
-
-                // Assign the modified list back to the terrain
-                terrainData.treeInstances = currentTrees.ToArray();
-            }
-        }
+        if (radii.x <= 0f || radii.y <= 0f) return false;
+        float norm = (dx * dx) / (radii.x * radii.x) + (dy * dy) / (radii.y * radii.y);
+        return (norm <= 1f);
     }
 }

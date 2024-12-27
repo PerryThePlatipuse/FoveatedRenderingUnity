@@ -5,14 +5,15 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-
 namespace GazeTracking
 {
     /// <summary>
     /// ZoneVisualizer draws two elliptical borders on the screen based on provided radii.
     /// Attach this to a central GameObject in your scene with a Canvas component.
     /// </summary>
+    /// 
     [RequireComponent(typeof(Canvas))]
+    [DefaultExecutionOrder(1000)]
     public class ZoneVisualizer : MonoBehaviour
     {
         [Header("Circle Prefab")]
@@ -31,6 +32,28 @@ namespace GazeTracking
         [Tooltip("Color of the middle ellipse border.")]
         public Color middleColor = Color.red;
 
+        [Header("Visualization Control")]
+        [Tooltip("Toggle to enable or disable the visualization.")]
+        [SerializeField]
+        public bool isVisualizationEnabled = true;
+
+        /// <summary>
+        /// Property to get or set the visualization enabled state.
+        /// Automatically updates the visualization when set.
+        /// </summary>
+        public bool IsVisualizationEnabled
+        {
+            get => isVisualizationEnabled;
+            set
+            {
+                if (isVisualizationEnabled != value)
+                {
+                    isVisualizationEnabled = value;
+                    SetVisualizationEnabled(isVisualizationEnabled);
+                }
+            }
+        }
+
         private Image innerCircleImage;
         private Image middleCircleImage;
 
@@ -39,6 +62,10 @@ namespace GazeTracking
         // UI elements for dynamic positioning
         private RectTransform innerRectTransform;
         private RectTransform middleRectTransform;
+
+        // References to the ellipse GameObjects
+        private GameObject innerCircle;
+        private GameObject middleCircle;
 
         // Last known screen size to handle resolution changes
         private Vector2 lastScreenSize;
@@ -56,7 +83,7 @@ namespace GazeTracking
             }
 
             // Create Inner Ellipse
-            GameObject innerCircle = Instantiate(circlePrefab, canvas.transform);
+            innerCircle = Instantiate(circlePrefab, canvas.transform);
             innerCircle.name = "InnerEllipse";
             innerCircleImage = innerCircle.GetComponent<Image>();
             if (innerCircleImage == null)
@@ -69,7 +96,7 @@ namespace GazeTracking
             SetEllipseSize(innerRectTransform, innerRadius);
 
             // Create Middle Ellipse
-            GameObject middleCircle = Instantiate(circlePrefab, canvas.transform);
+            middleCircle = Instantiate(circlePrefab, canvas.transform);
             middleCircle.name = "MiddleEllipse";
             middleCircleImage = middleCircle.GetComponent<Image>();
             if (middleCircleImage == null)
@@ -87,6 +114,9 @@ namespace GazeTracking
 
         void Start()
         {
+            // Initialize visualization state
+            SetVisualizationEnabled(isVisualizationEnabled);
+
             // Ensure ellipses are correctly sized at start
             if (innerCircleImage != null && middleCircleImage != null)
             {
@@ -105,6 +135,12 @@ namespace GazeTracking
             {
                 lastScreenSize = currentScreenSize;
                 UpdateRadii(innerRadius, middleRadius);
+            }
+
+            // Optional: Toggle visualization with the "V" key for testing
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                IsVisualizationEnabled = !IsVisualizationEnabled;
             }
         }
 
@@ -126,7 +162,6 @@ namespace GazeTracking
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
 
-            // Calculate size in pixels based on normalized radii
             float width = Screen.width * radii.x * 2.0f;
             float height = Screen.height * radii.y * 2.0f;
 
@@ -153,20 +188,34 @@ namespace GazeTracking
         /// <param name="screenPosition">Screen position in pixels.</param>
         public void SetCenter(Vector2 screenPosition)
         {
-            screenPosition.x = ()screenPosition.x + 1) / 2;
-            screenPosition.y = ()screenPosition.y + 1) / 2;
             if (canvas == null)
             {
                 Debug.LogError("ZoneVisualizer: Canvas component is missing.");
                 return;
             }
             Vector2 canvasSize = canvas.GetComponent<RectTransform>().sizeDelta;
-            screenPosition.x = canvasSize.x * (-screenPosition.x + 1) / 2;
-            screenPosition.y = canvasSize.y * (screenPosition.y + 1) / 2;
-            Debug.Log(screenPosition);
+            screenPosition.x = canvasSize.x * (-screenPosition.x) / 2;
+            screenPosition.y = canvasSize.y * (screenPosition.y) / 2;
 
             innerRectTransform.anchoredPosition = screenPosition;
             middleRectTransform.anchoredPosition = screenPosition;
+        }
+
+        /// <summary>
+        /// Enables or disables the visualization of the ellipses.
+        /// </summary>
+        /// <param name="enabled">True to show the visualization, false to hide it.</param>
+        public void SetVisualizationEnabled(bool enabled)
+        {
+            if (innerCircle != null && middleCircle != null)
+            {
+                innerCircle.SetActive(enabled);
+                middleCircle.SetActive(enabled);
+            }
+            else
+            {
+                Debug.LogWarning("ZoneVisualizer: Ellipse GameObjects are not initialized.");
+            }
         }
     }
 }
