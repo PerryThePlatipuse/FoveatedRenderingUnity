@@ -1,5 +1,6 @@
 using UnityEngine;
 using GazeTracking;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-100)]
 public class SceneInitializer : MonoBehaviour
@@ -53,11 +54,14 @@ public class SceneInitializer : MonoBehaviour
             // Choose plugin or mouse for VRS
             switch (gazeMode)
             {
-                case "Webcam":
+                case "Beam":
                     _vrsUrpController.gazeTrackingMethod = FoveatedRenderingVRS.GazeTrackingMethod.Plugin;
                     break;
                 case "Mouse":
                     _vrsUrpController.gazeTrackingMethod = FoveatedRenderingVRS.GazeTrackingMethod.Mouse;
+                    break;
+                case "EyeGestures":
+                    _vrsUrpController.gazeTrackingMethod = FoveatedRenderingVRS.GazeTrackingMethod.Python;
                     break;
             }
 
@@ -85,6 +89,29 @@ public class SceneInitializer : MonoBehaviour
                 DisableScript<CameraRoutePlayer>();
                 EnableScript<CameraMover>();
                 break;
+        }
+
+        // Set routeFileName based on the current scene
+        CameraRoutePlayer cameraRoutePlayer = mainCamera.GetComponent<CameraRoutePlayer>();
+        if (cameraRoutePlayer != null)
+        {
+            string sceneName = SceneManager.GetActiveScene().name;
+            switch (sceneName)
+            {
+                case "NightCity":
+                    cameraRoutePlayer.routeFileName = "CameraRoute.json";
+                    break;
+                case "Mountains":
+                    cameraRoutePlayer.routeFileName = "CameraRouteMountains.json";
+                    break;
+                default:
+                    Debug.LogWarning("Unknown scene: " + sceneName);
+                    break;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("CameraRoutePlayer component not found on Main Camera.");
         }
 
         // 3) LOD Approach

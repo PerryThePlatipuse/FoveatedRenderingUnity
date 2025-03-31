@@ -1248,15 +1248,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6129889611108401295, guid: 6225fb97547f67e48be0fe8945c5deaf, type: 3}
       propertyPath: m_Options.m_Options.Array.size
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6129889611108401295, guid: 6225fb97547f67e48be0fe8945c5deaf, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[0].m_Text
+      value: Mouse
       objectReference: {fileID: 0}
     - target: {fileID: 6129889611108401295, guid: 6225fb97547f67e48be0fe8945c5deaf, type: 3}
       propertyPath: m_Options.m_Options.Array.data[1].m_Text
-      value: Mobile
+      value: Beam
       objectReference: {fileID: 0}
     - target: {fileID: 6129889611108401295, guid: 6225fb97547f67e48be0fe8945c5deaf, type: 3}
       propertyPath: m_Options.m_Options.Array.data[2].m_Text
-      value: Mobile
+      value: EyeGestures
       objectReference: {fileID: 0}
     - target: {fileID: 6132950844394176886, guid: 6225fb97547f67e48be0fe8945c5deaf, type: 3}
       propertyPath: m_Options.m_Options.Array.size
@@ -1517,9 +1521,9 @@ MonoBehaviour:
   sceneDropdown: {fileID: 181422226}
   gazeModeDropdown: {fileID: 1354696833}
   gameModeDropdown: {fileID: 1655147230}
-  VRSToggle: {fileID: 0}
-  LODToggle: {fileID: 0}
-  borderToggle: {fileID: 1475724683}
+  VRSToggle: {fileID: 1475724683}
+  LODToggle: {fileID: 426542608}
+  borderToggle: {fileID: 1409134019}
   startButton: {fileID: 1502620228}
 --- !u!114 &1475724683 stripped
 MonoBehaviour:

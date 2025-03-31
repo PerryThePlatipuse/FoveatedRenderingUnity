@@ -7,7 +7,7 @@ namespace GazeTracking
 {
     public class GazePluginUpdater : GazeUpdater
     {
-        private const string DllName = "GazeTracking";
+        private const string DllName = "beam_gaze_plugin";
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern void InitializeGazeTracking();
@@ -40,6 +40,8 @@ namespace GazeTracking
 
         public override Vector2 GetGazeDirectionVector()
         {
+            //float gazeX, gazeY;
+            //GetGazeDirection(out gazeX, out gazeY);
             GetGazeDirection(out float x, out float y);
             // Flip X if needed
             return new Vector2(-x, y);

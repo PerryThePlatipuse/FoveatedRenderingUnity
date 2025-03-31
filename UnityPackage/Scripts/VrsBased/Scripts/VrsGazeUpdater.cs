@@ -8,7 +8,8 @@ namespace FoveatedRenderingVRS
     public enum GazeTrackingMethod
     {
         Plugin,
-        Mouse
+        Mouse,
+        Python
     }
 
     public class VrsGazeUpdater : MonoBehaviour
@@ -71,6 +72,9 @@ namespace FoveatedRenderingVRS
             {
                 case GazeTrackingMethod.Mouse:
                     gazeImplementation = new GazeMouseUpdater();
+                    break;
+                case GazeTrackingMethod.Python:
+                    gazeImplementation = new GazePythonUpdater();
                     break;
                 case GazeTrackingMethod.Plugin:
                 default:
