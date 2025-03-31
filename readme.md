@@ -62,6 +62,7 @@ By combining **webcam-based gaze tracking** with **real-time rendering optimizat
 
 ## 🔧 Plugin Usage
 
+To use it, you should attach VrsUrpController (VrsBirpController) script to a camera object.
 
 ## 📊 Results
 
