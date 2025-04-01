@@ -5,7 +5,9 @@ cam = cv2.VideoCapture(0)
 face_mesh = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True)
 
 while True:
-    _, frame = cam.read()
+    ret, frame = cam.read()
+    if not ret:
+        break
     frame = cv2.flip(frame, 1)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     output = face_mesh.process(rgb_frame)
@@ -25,9 +27,7 @@ while True:
                 x_norm = landmark.x * 2 - 1
                 y_norm = 1 - landmark.y * 2
 
-                coord_text = f"X: {x_norm:.2f}, Y: {y_norm:.2f}"
-                cv2.putText(frame, coord_text, (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                print(f"X: {x_norm:.2f}, Y: {y_norm:.2f}")
 
     cv2.imshow('Eye Tracking', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
