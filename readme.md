@@ -41,7 +41,7 @@ By combining **webcam-based gaze tracking** with **real-time rendering optimizat
   ```bash
   python3 -m pip install eyeGestures
   ```
-- run *GazeTracking.py* script and complete the calibration procedure
+- run *EyeGesturesImpl.py* script and complete the calibration procedure
 
 ### Demo Installation
 - Download **build** folder from the [project's folder](https://disk.yandex.ru/client/disk/%D0%9A%D1%83%D1%80%D1%81%D0%BE%D0%B2%D0%BE%D0%B9%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%20%D0%A5%D0%BE%D1%80%D1%82%20%D0%A9%D0%B5%D1%80%D0%B1%D0%B0%D0%BA%D0%BE%D0%B2)
