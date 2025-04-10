@@ -37,9 +37,9 @@ By combining **webcam-based gaze tracking** with **real-time rendering optimizat
 - To use Beam with the plugin, complete the calibration procedure and enable "Game Extensions" setting in Beam.
 
 ### EyeGestures Installation
-- Install python package МАТВЕЙ НУЖНО ИСПРАВИТЬ ЕСЛИ НЕ ТАК ЧТО ТО
+- Install python package
   ```bash
-  pip install eyegestures
+  python3 -m pip install eyeGestures
   ```
 - run *GazeTracking.py* script and complete the calibration procedure
 
