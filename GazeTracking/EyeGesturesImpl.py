@@ -82,11 +82,8 @@ while running:
     )
 
     screen.fill((0, 0, 0))
-    # 1. создаём поверхность
     frame_surface = pygame.surfarray.make_surface(np.rot90(frame))
-    # 2. масштабируем
     frame_surface = pygame.transform.scale(frame_surface, (400, 400))
-    # 3. рисуем где нужно (левый‑верхний угол, или любой другой)
     screen.blit(frame_surface, (0, 0))
 
     if event is not None or calibration is not None:
